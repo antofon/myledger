@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Plaid Link – Get Access Tokens</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      width: 500px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    p.sub {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .bank-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      border: 1.5px solid #e0e4ef;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1a1a2e;
+      transition: all 0.15s;
+    }
+
+    .bank-btn:hover {
+      border-color: #5c6bc0;
+      background: #f7f8ff;
+    }
+
+    .bank-btn.connected {
+      border-color: #4caf50;
+      background: #f1fdf2;
+      color: #2e7d32;
+    }
+
+    .bank-btn .badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .bank-btn .arrow {
+      color: #aaa;
+      font-size: 18px;
+    }
+
+    .token-box {
+      margin-top: 28px;
+      background: #f4f6f9;
+      border-radius: 8px;
+      padding: 18px;
+      display: none;
+    }
+
+    .token-box h3 {
+      font-size: 14px;
+      color: #444;
+      margin: 0 0 12px;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e0e4ef;
+    }
+
+    .token-row .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      min-width: 80px;
+    }
+
+    .token-row .value {
+      font-size: 12px;
+      color: #333;
+      font-family: monospace;
+      word-break: break-all;
+      flex: 1;
+      margin: 0 12px;
+    }
+
+    .copy-btn {
+      font-size: 12px;
+      padding: 4px 12px;
+      border: 1px solid #5c6bc0;
+      border-radius: 4px;
+      color: #5c6bc0;
+      background: white;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: #5c6bc0;
+      color: white;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #999;
+      line-height: 1.6;
+      border-top: 1px solid #eee;
+      padding-top: 16px;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #888;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+
+    .status.error {
+      color: #e53935;
+    }
+
+    .status.success {
+      color: #43a047;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>🔗 Plaid Link – Get Access Tokens</h1>
+    <p class="sub">Connect each bank account to get its access token for Apps Script.</p>
+
+    <button class="bank-btn" id="btn-bank1" onclick="launchLink('BANK1', 'btn-bank1')">
+      <span>🟢 BANK1</span><span class="arrow">›</span>
+    </button>
+    <button class="bank-btn" id="btn-bank2" onclick="launchLink('BANK2', 'btn-bank2')">
+      <span>🔴 BANK2</span><span class="arrow">›</span>
+    </button>
+    <button class="bank-btn" id="btn-bank3" onclick="launchLink('BANK3', 'btn-bank3')">
+      <span>🔵 BANK3 (Checking + Savings)</span><span class="arrow">›</span>
+    </button>
+    <button class="bank-btn" id="btn-bank4" onclick="launchLink('BANK4', 'btn-bank4')">
+      <span>🟣 BANK4</span><span class="arrow">›</span>
+    </button>
+
+    <div class="status" id="status"></div>
+
+    <div class="token-box" id="token-box">
+      <h3>📋 Your Access Tokens — copy these into Apps Script</h3>
+      <div id="token-list"></div>
+    </div>
+
+    <div class="note">
+      ⚠️ Uses the Plaid environment set in .env (sandbox or production).<br>
+      Store all tokens securely in Apps Script Properties Service only.
+    </div>
+  </div>
+
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  <script>
+    const tokens = {};
+
+    async function launchLink(bankName, btnId) {
+      const status = document.getElementById('status');
+      status.className = 'status';
+      status.textContent = `Initializing link for ${bankName}...`;
+
+      try {
+        // Step 1: Get link token from local server
+        const res = await fetch('/create-link-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (!data.link_token) {
+          status.className = 'status error';
+          status.textContent = `Error: ${JSON.stringify(data)}`;
+          return;
+        }
+
+        // Step 2: Launch Plaid Link
+        const handler = Plaid.create({
+          token: data.link_token,
+          onSuccess: async (public_token, metadata) => {
+            status.textContent = `Exchanging token for ${bankName}...`;
+
+            // Step 3: Exchange via local server
+            const exchRes = await fetch('/exchange-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_token })
+            });
+
+            const exchData = await exchRes.json();
+
+            if (exchData.access_token) {
+              tokens[bankName] = exchData.access_token;
+              updateTokenBox();
+
+              // Mark button as connected
+              const btn = document.getElementById(btnId);
+              btn.className = 'bank-btn connected';
+              btn.innerHTML = `<span>✅ ${bankName}</span><span class="badge">Connected</span>`;
+
+              status.className = 'status success';
+              status.textContent = `✅ ${bankName} connected! Copy the token below.`;
+            } else {
+              status.className = 'status error';
+              status.textContent = `Exchange failed: ${JSON.stringify(exchData)}`;
+            }
+          },
+          onExit: (err) => {
+            if (err) {
+              status.className = 'status error';
+              status.textContent = `Exited: ${err.display_message || err.error_message}`;
+            } else {
+              status.textContent = '';
+            }
+          }
+        });
+
+        handler.open();
+
+      } catch (err) {
+        status.className = 'status error';
+        status.textContent = `Network error: ${err.message}`;
+      }
+    }
+
+    function updateTokenBox() {
+      const box = document.getElementById('token-box');
+      const list = document.getElementById('token-list');
+      box.style.display = 'block';
+      list.innerHTML = '';
+
+      const keyMap = {
+        'BANK1': 'PLAID_TOKEN_BANK1',
+        'BANK2': 'PLAID_TOKEN_BANK2',
+        'BANK3': 'PLAID_TOKEN_BANK3',
+        'BANK4': 'PLAID_TOKEN_BANK4'
+      };
+
+      for (const [bank, token] of Object.entries(tokens)) {
+        const row = document.createElement('div');
+        row.className = 'token-row';
+        row.innerHTML = `
+        <span class="label">${keyMap[bank]}</span>
+        <span class="value" id="val-${bank}">${token}</span>
+        <button class="copy-btn" onclick="copyToken('${bank}')">Copy</button>
+      `;
+        list.appendChild(row);
+      }
+    }
+
+    function copyToken(bank) {
+      const val = document.getElementById(`val-${bank}`).textContent;
+      navigator.clipboard.writeText(val).then(() => {
+        document.getElementById('status').className = 'status success';
+        document.getElementById('status').textContent = `✅ ${bank} token copied to clipboard!`;
+      });
+    }
+  </script>
+</body>
+
+</html>
