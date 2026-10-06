@@ -8,6 +8,8 @@
 
 A personal finance tracker that pulls real bank transactions through the **Plaid API** into **Google Sheets**, categorizes them with **Google Apps Script**, and emails a weekly spending report. No servers to run, no manual statement downloads.
 
+**[Case study (PDF)](https://anwanantofon.com/myledger-case-study.pdf)**: the problem, how it works, what made the data hard, and the path from Sandbox to Production in 7 slides.
+
 I built MyLedger to replace a budgeting spreadsheet I was updating by hand. My Plaid Production application was approved in mid-March 2026, and from then until August the script fetched my transactions twice a week. The runs used Plaid's free API allowance; when the call cap ran out on Aug 26, 2026, I paused fetching rather than move to paid usage.
 
 ---
