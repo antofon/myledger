@@ -1,6 +1,5 @@
-.env
-.env.*
-!.env.example
+# no .env file of any kind is ever committed, templates included (see link-server/env.template)
+.env*
 node_modules/
 *.log
 .clasp.json

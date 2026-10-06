@@ -172,7 +172,7 @@ The full walkthrough, with what the application asks about, is in [docs/plaid-ac
 ### 1. Link your accounts
 ```bash
 cd link-server
-cp .env.example .env              # add PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV
+cp env.template .env              # add PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV
 npm install
 node --env-file=.env server.js    # then open http://localhost:3000/plaid_link.html
 ```

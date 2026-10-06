@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Credentials come from .env (copy .env.example). Start with: node --env-file=.env server.js
+// Credentials come from .env (copy env.template). Start with: node --env-file=.env server.js
 const CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const SECRET = process.env.PLAID_SECRET;
 const PLAID_ENV = process.env.PLAID_ENV || 'sandbox';
@@ -14,7 +14,7 @@ const PLAID_BASE = `https://${PLAID_ENV}.plaid.com`;
 const PORT = process.env.PORT || 3000;
 
 if (!CLIENT_ID || !SECRET) {
-  console.error('Missing PLAID_CLIENT_ID or PLAID_SECRET. Copy .env.example to .env and fill it in.');
+  console.error('Missing PLAID_CLIENT_ID or PLAID_SECRET. Copy env.template to .env and fill it in.');
   process.exit(1);
 }
 
